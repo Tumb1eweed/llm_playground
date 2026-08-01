@@ -18,7 +18,6 @@ from __future__ import annotations
 import math
 
 import torch
-from torch._numpy import bool_
 import torch.nn as nn
 import torch.nn.functional as F
 
