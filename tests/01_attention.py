@@ -1,11 +1,11 @@
 """
-Lesson 01 默写卷 — 合上资料，自己填空。
+手撕练习 01 — Scaled Dot-Product / Multi-Head Attention
 
 规则：
-1. 不要看 01_attention.py
-2. 只允许查 PyTorch API 文档（matmul / view / transpose）
-3. 写完后运行：python lessons/01_blank.py
-4. 对照 01_attention.py 自己改错
+1. 不要看 lessons/01_attention.py
+2. 只允许查 PyTorch API（matmul / view / transpose / masked_fill）
+3. 写完后运行：python tests/01_attention.py
+4. 对照 lessons/01_attention.py 自己改错
 
 通过标准：
 - shape 全对
@@ -16,24 +16,25 @@ Lesson 01 默写卷 — 合上资料，自己填空。
 from __future__ import annotations
 
 import math
+
 import torch
+from torch._numpy import bool_
 import torch.nn as nn
 import torch.nn.functional as F
 
-def attention(
-    q: torch.Tensor, # (batch, seq_len, d_k)
-    k: torch.Tensor, # (batch, seq_len, d_k)
-    v: torch.Tensor, # (batch, seq_len, d_k)
-    mask: torch.Tensor | None = None
-):
+
+def attention(q, k, v, mask=None):
     d_k = q.size(-1)
     scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)
-    attn = F.softmax(scores, dim = -1)
-    out = torch.matmul(attn, v)
+    if mask is not None:
+        scores = scores.masked_fill(mask, float("-inf"))
+    attn = F.softmax(scores, dim=-1)
+    out = attn @ v
     return attn, out
 
+
+
 def scaled_dot_product_attention(q, k, v, mask=None):
-    d_k = q.size(-1)
     # TODO: scores = ? / sqrt(d_k)
     # TODO: mask 填 -inf
     # TODO: softmax + 乘 V
@@ -41,7 +42,7 @@ def scaled_dot_product_attention(q, k, v, mask=None):
 
 
 def causal_mask(seq_len: int, device=None) -> torch.Tensor:
-    # TODO: 返回 (seq, seq) 的 bool 上三角掩码
+    # TODO: 返回 (seq, seq) 的 bool 上三角掩码（True=屏蔽）
     raise NotImplementedError
 
 
@@ -83,8 +84,15 @@ def _self_check() -> None:
     assert attn[0, 0][upper].abs().max() < 1e-5
     # 行和 ≈ 1
     assert torch.allclose(attn[0, 0].sum(-1), torch.ones(t), atol=1e-4)
-    print("PASS ✅  Attention 默写过关")
+    print("PASS  Attention 手撕过关")
 
 
 if __name__ == "__main__":
-    _self_check()
+    seq_len = 5; d_k = 6
+    q = torch.randn(seq_len, d_k)
+    k = torch.randn(seq_len, d_k)
+    v = torch.randn(seq_len, d_k)
+    mask = torch.triu(torch.ones(seq_len, seq_len, dtype=torch.bool), diagonal=1)
+    attn, out = attention(q, k, v, mask)
+    print(attn, "\n", out)
+    #_self_check()

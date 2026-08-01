@@ -10,6 +10,9 @@ Lesson 01 — Scaled Dot-Product Attention & Multi-Head Attention
 
 运行：
     python lessons/01_attention.py
+
+手撕练习（合上本文件再写）：
+    python tests/01_attention.py
 """
 
 from __future__ import annotations
